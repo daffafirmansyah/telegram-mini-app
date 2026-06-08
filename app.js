@@ -458,11 +458,16 @@ async function generateCC() {
   showToast(`✅ ${qty} cards generated`);
 
   // Auto-fill batch check textarea
-  const batchTextarea = document.getElementById('check-batch');
-  batchTextarea.value = cards.map(c => {
-    const [mm, yy] = c.exp.split('/');
-    return `${c.card}|${mm}/${yy}|${c.cvv}`;
-  }).join('\n');
+  requestAnimationFrame(() => {
+    const batchTextarea = document.getElementById('check-batch');
+    if (batchTextarea) {
+      batchTextarea.value = cards.map(c => {
+        const [mm, yy] = c.exp.split('/');
+        return `${c.card}|${mm}/${yy}|${c.cvv}`;
+      }).join('\n');
+      batchTextarea.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+  });
 }
 
 function copyCC(idx) {

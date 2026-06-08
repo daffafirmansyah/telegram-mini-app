@@ -458,7 +458,12 @@ async function generateCC() {
     const [mm, yy] = c.exp.split('/');
     return `${c.card}|${mm}/${yy}|${c.cvv}`;
   });
-  document.getElementById('check-batch').value = lines.join('\n');
+
+  // Aggressive textarea fill (Telegram WebApp needs extra care)
+  const ta = document.getElementById('check-batch');
+  ta.value = lines.join('\n');
+  ta.dispatchEvent(new Event('input', {bubbles: true}));
+  ta.dispatchEvent(new Event('change', {bubbles: true}));
 
   // Store for copy and batch check
   window._ccCards = cards;

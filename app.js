@@ -301,6 +301,28 @@ const COUNTRY_DATA = {
   },
 };
 
+function genEmail(name) {
+  const domains = ['outlook.com', 'gmail.com', 'yahoo.com', 'hotmail.com', 'protonmail.com', 'mail.com', 'icloud.com'];
+  const domain = domains[Math.floor(Math.random() * domains.length)];
+  const clean = name.toLowerCase()
+    .replace(/[^a-z\s]/g, '')
+    .replace(/\s+/g, '.')
+    .slice(0, 15);
+  const num = Math.floor(Math.random() * 999) + 1;
+  return `${clean}${num}@${domain}`;
+}
+
+function getTypeDetail(network, type) {
+  const map = {
+    'Visa': 'Visa Classic',
+    'Mastercard': 'Mastercard World',
+    'Amex': 'Amex Green',
+    'Discover': 'Discover It',
+    'UnionPay': 'UnionPay BI',
+    'JCB': 'JCB Gold',
+  };
+  return map[network] || `${network} ${type}`;
+}
 function luhnCheck(card) {
   const digits = card.split('').map(Number);
   const odd = digits.slice(-1, -digits.length - 1, -2).reduce((a, b) => a + b, 0);
@@ -376,15 +398,20 @@ async function generateCC() {
     const streetIdx = Math.floor(Math.random() * countryData.streets.length);
     const cityIdx = Math.floor(Math.random() * countryData.cities.length);
     const phone = countryData.phones();
+    const email = genEmail(countryData.names[nameIdx]);
 
     cards.push({
       card, exp, cvv,
+      bin: bin.slice(0, 10),
+      type: getTypeDetail(binInfo.network, binInfo.type),
       name: countryData.names[nameIdx],
       street: countryData.streets[streetIdx],
       city: countryData.cities[cityIdx],
       state: countryData.states[cityIdx],
       zip: countryData.zips[cityIdx],
       phone,
+      email,
+      country,
     });
   }
 
@@ -396,15 +423,30 @@ async function generateCC() {
       <div>
         <div class="cc-number">${c.card}</div>
         <div class="cc-details">
-          <span>${c.exp}</span>
-          <span>${c.cvv}</span>
-          <span>${c.name}</span>
+          <span>Exp:${c.exp}</span>
+          <span>CVV:${c.cvv}</span>
         </div>
         <div class="cc-details" style="margin-top:4px; font-size:11px; color:var(--text-dim)">
-          <span>${c.street}, ${c.city}, ${c.state} ${c.zip}</span>
+          <span>N:${c.bin}</span>
+          <span>Type: ${c.type}</span>
         </div>
         <div class="cc-details" style="margin-top:2px; font-size:11px; color:var(--text-dim)">
-          <span>📞 ${c.phone}</span>
+          <span>Name: ${c.name}</span>
+        </div>
+        <div class="cc-details" style="margin-top:2px; font-size:11px; color:var(--text-dim)">
+          <span>Street: ${c.street}</span>
+        </div>
+        <div class="cc-details" style="margin-top:2px; font-size:11px; color:var(--text-dim)">
+          <span>City: ${c.city}, ${c.zip}</span>
+        </div>
+        <div class="cc-details" style="margin-top:2px; font-size:11px; color:var(--text-dim)">
+          <span>Country: ${c.country}</span>
+        </div>
+        <div class="cc-details" style="margin-top:2px; font-size:11px; color:var(--text-dim)">
+          <span>Phone: ${c.phone}</span>
+        </div>
+        <div class="cc-details" style="margin-top:2px; font-size:11px; color:var(--text-dim)">
+          <span>Email: ${c.email}</span>
         </div>
       </div>
       <button class="cc-copy" onclick="copyCC(${i})">📋</button>
@@ -418,14 +460,34 @@ async function generateCC() {
 
 function copyCC(idx) {
   const c = window._ccCards[idx];
-  const text = `${c.card}|${c.exp.replace('/', '|')}|${c.cvv}|${c.name}|${c.street}|${c.city}|${c.state}|${c.zip}|${c.phone}`;
+  const text = [
+    c.card,
+    `Exp:${c.exp} CVV:${c.cvv}`,
+    `N:${c.bin}`,
+    `Type: ${c.type}`,
+    `Name: ${c.name}`,
+    `Street:${c.street}`,
+    `City:${c.city}, ${c.zip}`,
+    `Country: ${c.country}`,
+    `Phone:${c.phone}`,
+    `Email: ${c.email}`,
+  ].join('\n');
   navigator.clipboard.writeText(text).then(() => showToast('📋 Copied'));
 }
 
 function copyAllCC() {
-  const text = window._ccCards.map(c =>
-    `${c.card}|${c.exp.replace('/', '|')}|${c.cvv}|${c.name}|${c.street}|${c.city}|${c.state}|${c.zip}|${c.phone}`
-  ).join('\n');
+  const text = window._ccCards.map(c => [
+    c.card,
+    `Exp:${c.exp} CVV:${c.cvv}`,
+    `N:${c.bin}`,
+    `Type: ${c.type}`,
+    `Name: ${c.name}`,
+    `Street:${c.street}`,
+    `City:${c.city}, ${c.zip}`,
+    `Country: ${c.country}`,
+    `Phone:${c.phone}`,
+    `Email: ${c.email}`,
+  ].join('\n')).join('\n\n');
   navigator.clipboard.writeText(text).then(() => showToast(`📋 ${window._ccCards.length} cards copied`));
 }
 

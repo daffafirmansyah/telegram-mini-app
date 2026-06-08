@@ -151,6 +151,64 @@
       </div>
       <div id="cc-container" class="card-list"></div>
     </div>
+
+    <!-- BIN Lookup Section -->
+    <div style="margin-top:24px; padding-top:20px; border-top:1px solid var(--border)">
+      <div class="section-header">
+        <h2>BIN Lookup</h2>
+        <div class="chip">API + Local DB</div>
+      </div>
+      <div class="form-card">
+        <label class="form-label">BIN Number (6-8 digits)</label>
+        <input type="text" id="bin-lookup-input" class="form-input" placeholder="e.g. 623358 or 453201" maxlength="8" inputmode="numeric">
+        <button class="btn-primary btn-full" onclick="lookupBIN()">🔍 Lookup BIN</button>
+      </div>
+      <div id="bin-lookup-result" class="info-card hidden">
+        <div class="info-header">BIN Details</div>
+        <div class="info-grid" id="bin-lookup-details"></div>
+      </div>
+    </div>
+
+    <!-- CC Checker Section -->
+    <div style="margin-top:24px; padding-top:20px; border-top:1px solid var(--border)">
+      <div class="section-header">
+        <h2>CC Checker</h2>
+        <div class="chip">Live / Die</div>
+      </div>
+      <div class="form-card">
+        <label class="form-label">Card Number</label>
+        <input type="text" id="check-card" class="form-input" placeholder="4532010000000000" maxlength="19" inputmode="numeric">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Exp (MM/YY)</label>
+            <input type="text" id="check-exp" class="form-input" placeholder="08/29" maxlength="5">
+          </div>
+          <div class="form-group">
+            <label class="form-label">CVV</label>
+            <input type="text" id="check-cvv" class="form-input" placeholder="016" maxlength="4" inputmode="numeric">
+          </div>
+        </div>
+        <button class="btn-primary btn-full" onclick="checkCC()">🔍 Check Card</button>
+      </div>
+      <div id="check-result" class="info-card hidden">
+        <div class="info-header">Check Result</div>
+        <div id="check-result-content"></div>
+      </div>
+      
+      <!-- Batch Check -->
+      <div class="form-card" style="margin-top:12px">
+        <label class="form-label">Batch Check (one card per line)</label>
+        <textarea id="check-batch" class="form-textarea" rows="4" placeholder="4532010000000000|08/29|016&#10;5289850000000000|12/28|123"></textarea>
+        <button class="btn-secondary btn-full" onclick="batchCheckCC()">⚡ Batch Check</button>
+      </div>
+      <div id="batch-results" class="hidden">
+        <div class="section-subheader">
+          <span>Batch Results</span>
+          <span id="batch-stats"></span>
+        </div>
+        <div id="batch-container" class="card-list"></div>
+      </div>
+    </div>
   </section>
 
   <!-- TAB 4: Cron Job Manager -->

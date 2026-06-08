@@ -492,6 +492,172 @@ function copyAllCC() {
 }
 
 // ============================================================
+// BIN LOOKUP
+// ============================================================
+
+async function lookupBIN() {
+  const bin = document.getElementById('bin-lookup-input').value.trim();
+  if (bin.length < 6) return showToast('❌ BIN must be 6-8 digits');
+
+  const resultEl = document.getElementById('bin-lookup-result');
+  const detailsEl = document.getElementById('bin-lookup-details');
+  resultEl.classList.remove('hidden');
+  detailsEl.innerHTML = '<div style="color:var(--text-dim)">Looking up...</div>';
+
+  // Try API first
+  let data = null;
+  try {
+    const resp = await fetch(`https://lookup.binlist.net/${bin.slice(0, 6)}`, {
+      headers: { 'Accept-Version': '3' }
+    });
+    if (resp.ok) data = await resp.json();
+  } catch {}
+
+  // Fallback to local DB
+  if (!data) {
+    const local = getBinInfo(bin);
+    data = {
+      scheme: local.network.toLowerCase(),
+      type: local.type.toLowerCase(),
+      brand: local.network,
+      country: { alpha2: local.country, name: getCountryName(local.country) },
+      bank: { name: local.issuer },
+    };
+  }
+
+  detailsEl.innerHTML = `
+    <div class="info-item"><span class="info-key">Network</span><span class="info-val">${(data.scheme || data.network || 'Unknown').toUpperCase()}</span></div>
+    <div class="info-item"><span class="info-key">Brand</span><span class="info-val">${data.brand || data.scheme || 'Unknown'}</span></div>
+    <div class="info-item"><span class="info-key">Type</span><span class="info-val">${(data.type || 'Unknown').toUpperCase()}</span></div>
+    <div class="info-item"><span class="info-key">Country</span><span class="info-val">${data.country?.name || data.country || 'Unknown'} (${data.country?.alpha2 || '?'})</span></div>
+    <div class="info-item"><span class="info-key">Issuer</span><span class="info-val">${data.bank?.name || data.issuer || 'Unknown'}</span></div>
+    <div class="info-item"><span class="info-key">BIN</span><span class="info-val">${bin}</span></div>
+  `;
+}
+
+function getCountryName(code) {
+  const map = {'US':'United States','UK':'United Kingdom','DE':'Germany','FR':'France','JP':'Japan','KR':'South Korea','ID':'Indonesia','BR':'Brazil','CN':'China','SG':'Singapore','AU':'Australia','CA':'Canada','IN':'India','NL':'Netherlands','ES':'Spain','IT':'Italy'};
+  return map[code] || code || 'Unknown';
+}
+
+// ============================================================
+// CC CHECKER (chkr.cc API)
+// ============================================================
+
+async function checkCC() {
+  const card = document.getElementById('check-card').value.trim().replace(/\s/g, '');
+  const exp = document.getElementById('check-exp').value.trim();
+  const cvv = document.getElementById('check-cvv').value.trim();
+
+  if (!card || card.length < 13) return showToast('❌ Enter valid card number');
+  if (!exp || !/^\d{2}\/\d{2}$/.test(exp)) return showToast('❌ Exp format: MM/YY');
+  if (!cvv) return showToast('❌ Enter CVV');
+
+  const resultEl = document.getElementById('check-result');
+  const contentEl = document.getElementById('check-result-content');
+  resultEl.classList.remove('hidden');
+  contentEl.innerHTML = '<div style="color:var(--text-dim)">Checking...</div>';
+
+  const [mm, yy] = exp.split('/');
+  const payload = `${card}|${mm}|20${yy}|${cvv}`;
+
+  try {
+    const resp = await fetch(`https://chkr.cc/api/check?card=${encodeURIComponent(payload)}`);
+    const data = await resp.json();
+
+    const status = (data.status || 'unknown').toLowerCase();
+    const statusColor = status === 'live' ? 'var(--green)' : status === 'die' ? 'var(--red)' : 'var(--yellow)';
+    const statusEmoji = status === 'live' ? '✅' : status === 'die' ? '❌' : '⚠️';
+
+    contentEl.innerHTML = `
+      <div style="text-align:center; padding:16px">
+        <div style="font-size:48px; margin-bottom:12px">${statusEmoji}</div>
+        <div style="font-size:24px; font-weight:700; color:${statusColor}; text-transform:uppercase; font-family:'JetBrains Mono',monospace">${status}</div>
+        <div style="font-size:13px; color:var(--text-dim); margin-top:8px">${card}</div>
+        <div style="font-size:12px; color:var(--text-dim); margin-top:4px">Exp: ${exp} | CVV: ${cvv}</div>
+      </div>
+    `;
+  } catch (e) {
+    contentEl.innerHTML = `
+      <div style="text-align:center; padding:16px; color:var(--red)">
+        <div style="font-size:32px; margin-bottom:8px">⚠️</div>
+        <div>API Error — try again later</div>
+        <div style="font-size:11px; color:var(--text-dim); margin-top:4px">${e.message}</div>
+      </div>
+    `;
+  }
+}
+
+async function batchCheckCC() {
+  const raw = document.getElementById('check-batch').value.trim();
+  if (!raw) return showToast('❌ Enter cards to check');
+
+  const lines = raw.split('\n').filter(l => l.trim());
+  const cards = lines.map(line => {
+    const parts = line.split('|').map(p => p.trim());
+    if (parts.length >= 3) {
+      return { card: parts[0], exp: parts[1], cvv: parts[2] };
+    }
+    return null;
+  }).filter(Boolean);
+
+  if (!cards.length) return showToast('❌ Format: CARD|MM/YY|CVV');
+
+  const resultsEl = document.getElementById('batch-results');
+  const containerEl = document.getElementById('batch-container');
+  const statsEl = document.getElementById('batch-stats');
+  resultsEl.classList.remove('hidden');
+  containerEl.innerHTML = '<div style="color:var(--text-dim); padding:16px">Checking...</div>';
+
+  let live = 0, die = 0, unknown = 0;
+  const results = [];
+
+  for (const c of cards) {
+    const [mm, yy] = c.exp.split('/');
+    const payload = `${c.card}|${mm}|20${yy}|${c.cvv}`;
+
+    try {
+      const resp = await fetch(`https://chkr.cc/api/check?card=${encodeURIComponent(payload)}`);
+      const data = await resp.json();
+      const status = (data.status || 'unknown').toLowerCase();
+      if (status === 'live') live++;
+      else if (status === 'die') die++;
+      else unknown++;
+      results.push({ ...c, status });
+    } catch {
+      results.push({ ...c, status: 'error' });
+      unknown++;
+    }
+
+    // Rate limit: 500ms between requests
+    await new Promise(r => setTimeout(r, 500));
+  }
+
+  statsEl.textContent = `✅ ${live} Live | ❌ ${die} Die | ⚠️ ${unknown} Unknown`;
+
+  containerEl.innerHTML = results.map(r => {
+    const statusColor = r.status === 'live' ? 'var(--green)' : r.status === 'die' ? 'var(--red)' : 'var(--yellow)';
+    const emoji = r.status === 'live' ? '✅' : r.status === 'die' ? '❌' : '⚠️';
+    return `
+      <div class="cc-card">
+        <div>
+          <div class="cc-number">${r.card}</div>
+          <div class="cc-details">
+            <span>${r.exp}</span>
+            <span>${r.cvv}</span>
+          </div>
+        </div>
+        <div style="font-size:18px; font-weight:700; color:${statusColor}; font-family:'JetBrains Mono',monospace">
+          ${emoji} ${r.status.toUpperCase()}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  showToast(`Checked: ${live} live, ${die} die, ${unknown} unknown`);
+}
+
+// ============================================================
 // 4. CRON JOB MANAGER
 // ============================================================
 

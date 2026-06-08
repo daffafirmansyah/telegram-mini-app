@@ -344,7 +344,7 @@ function genCard(bin, length) {
 
 function genExp() {
   const month = String(Math.floor(Math.random() * 12) + 1).padStart(2, '0');
-  const year = 2027 + Math.floor(Math.random() * 4);
+  const year = 27 + Math.floor(Math.random() * 4); // 2-digit: 27-30
   return `${month}/${year}`;
 }
 

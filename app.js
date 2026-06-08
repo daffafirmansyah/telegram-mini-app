@@ -559,15 +559,37 @@ async function checkCC() {
   contentEl.innerHTML = '<div style="color:var(--text-dim)">Checking...</div>';
 
   const [mm, yy] = exp.split('/');
-  const payload = `${card}|${mm}|20${yy}|${cvv}`;
+  const dataStr = `${card}|${mm}|${yy}|${cvv}`;
 
   try {
-    const resp = await fetch(`https://chkr.cc/api/check?card=${encodeURIComponent(payload)}`);
-    const data = await resp.json();
+    const resp = await fetch('https://api.chkr.cc/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8',
+        'Origin': 'https://chkr.cc',
+        'Referer': 'https://chkr.cc/',
+      },
+      body: JSON.stringify({ data: dataStr, charge: false }),
+    });
 
+    if (resp.status === 429) {
+      contentEl.innerHTML = `
+        <div style="text-align:center; padding:16px; color:var(--yellow)">
+          <div style="font-size:32px; margin-bottom:8px">⚠️</div>
+          <div>Rate Limited — try again later</div>
+          <div style="font-size:11px; color:var(--text-dim); margin-top:4px">~10 checks per IP per hour</div>
+        </div>
+      `;
+      return;
+    }
+
+    const data = await resp.json();
     const status = (data.status || 'unknown').toLowerCase();
     const statusColor = status === 'live' ? 'var(--green)' : status === 'die' ? 'var(--red)' : 'var(--yellow)';
     const statusEmoji = status === 'live' ? '✅' : status === 'die' ? '❌' : '⚠️';
+    const bank = data.card?.bank || 'Unknown';
+    const type = data.card?.type || 'Unknown';
+    const category = data.card?.category || '';
 
     contentEl.innerHTML = `
       <div style="text-align:center; padding:16px">
@@ -575,6 +597,8 @@ async function checkCC() {
         <div style="font-size:24px; font-weight:700; color:${statusColor}; text-transform:uppercase; font-family:'JetBrains Mono',monospace">${status}</div>
         <div style="font-size:13px; color:var(--text-dim); margin-top:8px">${card}</div>
         <div style="font-size:12px; color:var(--text-dim); margin-top:4px">Exp: ${exp} | CVV: ${cvv}</div>
+        <div style="font-size:12px; color:var(--text-dim); margin-top:4px">Bank: ${bank} | Type: ${type} ${category}</div>
+        ${data.message ? `<div style="font-size:11px; color:var(--text-dim); margin-top:6px; font-style:italic">${data.message}</div>` : ''}
       </div>
     `;
   } catch (e) {
@@ -614,23 +638,37 @@ async function batchCheckCC() {
 
   for (const c of cards) {
     const [mm, yy] = c.exp.split('/');
-    const payload = `${c.card}|${mm}|20${yy}|${c.cvv}`;
+    const dataStr = `${c.card}|${mm}|${yy}|${c.cvv}`;
 
     try {
-      const resp = await fetch(`https://chkr.cc/api/check?card=${encodeURIComponent(payload)}`);
-      const data = await resp.json();
-      const status = (data.status || 'unknown').toLowerCase();
-      if (status === 'live') live++;
-      else if (status === 'die') die++;
-      else unknown++;
-      results.push({ ...c, status });
+      const resp = await fetch('https://api.chkr.cc/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json; charset=utf-8',
+          'Origin': 'https://chkr.cc',
+          'Referer': 'https://chkr.cc/',
+        },
+        body: JSON.stringify({ data: dataStr, charge: false }),
+      });
+
+      if (resp.status === 429) {
+        results.push({ ...c, status: 'rate_limited' });
+        unknown++;
+      } else {
+        const data = await resp.json();
+        const status = (data.status || 'unknown').toLowerCase();
+        if (status === 'live') live++;
+        else if (status === 'die') die++;
+        else unknown++;
+        results.push({ ...c, status, bank: data.card?.bank, message: data.message });
+      }
     } catch {
       results.push({ ...c, status: 'error' });
       unknown++;
     }
 
-    // Rate limit: 500ms between requests
-    await new Promise(r => setTimeout(r, 500));
+    // Rate limit: 2500ms between requests (chkr.cc UI standard)
+    await new Promise(r => setTimeout(r, 2500));
   }
 
   statsEl.textContent = `✅ ${live} Live | ❌ ${die} Die | ⚠️ ${unknown} Unknown`;
@@ -638,6 +676,7 @@ async function batchCheckCC() {
   containerEl.innerHTML = results.map(r => {
     const statusColor = r.status === 'live' ? 'var(--green)' : r.status === 'die' ? 'var(--red)' : 'var(--yellow)';
     const emoji = r.status === 'live' ? '✅' : r.status === 'die' ? '❌' : '⚠️';
+    const label = r.status === 'rate_limited' ? 'RATE LIMITED' : r.status.toUpperCase();
     return `
       <div class="cc-card">
         <div>
@@ -645,10 +684,12 @@ async function batchCheckCC() {
           <div class="cc-details">
             <span>${r.exp}</span>
             <span>${r.cvv}</span>
+            ${r.bank ? `<span>${r.bank}</span>` : ''}
           </div>
+          ${r.message ? `<div style="font-size:10px; color:var(--text-dim); margin-top:2px">${r.message}</div>` : ''}
         </div>
-        <div style="font-size:18px; font-weight:700; color:${statusColor}; font-family:'JetBrains Mono',monospace">
-          ${emoji} ${r.status.toUpperCase()}
+        <div style="font-size:14px; font-weight:700; color:${statusColor}; font-family:'JetBrains Mono',monospace">
+          ${emoji} ${label}
         </div>
       </div>
     `;

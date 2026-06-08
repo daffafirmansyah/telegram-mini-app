@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Kudaw Toolkit</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- Header -->
+<header id="header">
+  <div class="header-left">
+    <div class="logo">⚡ KUDAW</div>
+    <div class="logo-sub">TOOLKIT</div>
+  </div>
+  <div class="header-right">
+    <div class="user-badge" id="userBadge">
+      <span class="user-avatar" id="userAvatar">👤</span>
+      <span class="user-name" id="userName">User</span>
+    </div>
+  </div>
+</header>
+
+<!-- Navigation -->
+<nav id="nav">
+  <button class="nav-btn active" data-tab="drops" onclick="switchTab('drops')">
+    <span class="nav-icon">🎯</span>
+    <span class="nav-label">Drops</span>
+  </button>
+  <button class="nav-btn" data-tab="airdrop" onclick="switchTab('airdrop')">
+    <span class="nav-icon">🪂</span>
+    <span class="nav-label">Airdrop</span>
+  </button>
+  <button class="nav-btn" data-tab="ccgen" onclick="switchTab('ccgen')">
+    <span class="nav-icon">💳</span>
+    <span class="nav-label">CC Gen</span>
+  </button>
+  <button class="nav-btn" data-tab="cron" onclick="switchTab('cron')">
+    <span class="nav-icon">⏰</span>
+    <span class="nav-label">Cron</span>
+  </button>
+</nav>
+
+<!-- Main Content -->
+<main id="main">
+
+  <!-- TAB 1: NFT Drop Tracker -->
+  <section class="tab-content active" id="tab-drops">
+    <div class="section-header">
+      <h2>NFT Drop Tracker</h2>
+      <button class="btn-refresh" onclick="loadDrops()">🔄 Refresh</button>
+    </div>
+    
+    <div class="filter-bar">
+      <button class="filter-btn active" onclick="filterDrops('all')">All</button>
+      <button class="filter-btn" onclick="filterDrops('live')">🔴 Live</button>
+      <button class="filter-btn" onclick="filterDrops('upcoming')">🟡 Upcoming</button>
+      <button class="filter-btn" onclick="filterDrops('ended')">⚫ Ended</button>
+    </div>
+
+    <div id="drops-container" class="card-grid">
+      <div class="loading-spinner">Loading drops...</div>
+    </div>
+  </section>
+
+  <!-- TAB 2: Airdrop Dashboard -->
+  <section class="tab-content" id="tab-airdrop">
+    <div class="section-header">
+      <h2>Airdrop Dashboard</h2>
+      <button class="btn-add" onclick="showAddAirdrop()">+ Add Project</button>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-num" id="airdrop-total">0</div>
+        <div class="stat-label">Total</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" id="airdrop-active">0</div>
+        <div class="stat-label">Active</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" id="airdrop-done">0</div>
+        <div class="stat-label">Done</div>
+      </div>
+    </div>
+
+    <div id="airdrop-container" class="card-grid">
+      <div class="empty-state">
+        <div class="empty-icon">🪂</div>
+        <p>No airdrops tracked yet</p>
+        <button class="btn-primary" onclick="showAddAirdrop()">+ Add First Project</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- TAB 3: CC Generator -->
+  <section class="tab-content" id="tab-ccgen">
+    <div class="section-header">
+      <h2>CC Generator</h2>
+      <div class="chip">BIN Lookup + Luhn Valid</div>
+    </div>
+
+    <div class="form-card">
+      <label class="form-label">BIN Number (6-10 digits)</label>
+      <input type="text" id="cc-bin" class="form-input" placeholder="e.g. 453201 or 528985" maxlength="10" inputmode="numeric">
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Quantity</label>
+          <select id="cc-qty" class="form-select">
+            <option value="1">1</option>
+            <option value="5">5</option>
+            <option value="10" selected>10</option>
+            <option value="25">25</option>
+            <option value="50">50</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Country</label>
+          <select id="cc-country" class="form-select">
+            <option value="US">🇺🇸 US</option>
+            <option value="UK">🇬🇧 UK</option>
+            <option value="DE">🇩🇪 DE</option>
+            <option value="FR">🇫🇷 FR</option>
+            <option value="JP">🇯🇵 JP</option>
+            <option value="KR">🇰🇷 KR</option>
+            <option value="ID">🇮🇩 ID</option>
+            <option value="BR">🇧🇷 BR</option>
+          </select>
+        </div>
+      </div>
+
+      <button class="btn-primary btn-full" onclick="generateCC()">⚡ Generate</button>
+    </div>
+
+    <!-- BIN Info Card -->
+    <div id="bin-info" class="info-card hidden">
+      <div class="info-header">BIN Intelligence</div>
+      <div class="info-grid" id="bin-details"></div>
+    </div>
+
+    <!-- Generated Cards -->
+    <div id="cc-results" class="hidden">
+      <div class="section-subheader">
+        <span>Generated Cards</span>
+        <button class="btn-copy" onclick="copyAllCC()">📋 Copy All</button>
+      </div>
+      <div id="cc-container" class="card-list"></div>
+    </div>
+  </section>
+
+  <!-- TAB 4: Cron Job Manager -->
+  <section class="tab-content" id="tab-cron">
+    <div class="section-header">
+      <h2>Cron Job Manager</h2>
+      <button class="btn-add" onclick="showAddCron()">+ New Job</button>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-num" id="cron-total">0</div>
+        <div class="stat-label">Total</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" id="cron-active">0</div>
+        <div class="stat-label">Active</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" id="cron-paused">0</div>
+        <div class="stat-label">Paused</div>
+      </div>
+    </div>
+
+    <div id="cron-container" class="card-grid">
+      <div class="empty-state">
+        <div class="empty-icon">⏰</div>
+        <p>No cron jobs configured</p>
+        <button class="btn-primary" onclick="showAddCron()">+ Create First Job</button>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- Modal: Add Airdrop -->
+<div class="modal hidden" id="modal-airdrop">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Add Airdrop Project</h3>
+      <button class="modal-close" onclick="closeModal('airdrop')">✕</button>
+    </div>
+    <div class="modal-body">
+      <label class="form-label">Project Name</label>
+      <input type="text" id="airdrop-name" class="form-input" placeholder="e.g. LayerZero">
+      
+      <label class="form-label">Project URL</label>
+      <input type="url" id="airdrop-url" class="form-input" placeholder="https://...">
+      
+      <label class="form-label">Tasks (one per line)</label>
+      <textarea id="airdrop-tasks" class="form-textarea" rows="5" placeholder="Follow Twitter&#10;Join Discord&#10;Bridge ETH&#10;Swap tokens"></textarea>
+      
+      <label class="form-label">Wallet Address</label>
+      <input type="text" id="airdrop-wallet" class="form-input" placeholder="0x...">
+      
+      <label class="form-label">Notes</label>
+      <textarea id="airdrop-notes" class="form-textarea" rows="2" placeholder="Optional notes..."></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('airdrop')">Cancel</button>
+      <button class="btn-primary" onclick="saveAirdrop()">Save Project</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Add Cron Job -->
+<div class="modal hidden" id="modal-cron">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Create Cron Job</h3>
+      <button class="modal-close" onclick="closeModal('cron')">✕</button>
+    </div>
+    <div class="modal-body">
+      <label class="form-label">Job Name</label>
+      <input type="text" id="cron-name" class="form-input" placeholder="e.g. NFT Mint Alert">
+      
+      <label class="form-label">Schedule</label>
+      <input type="text" id="cron-schedule" class="form-input" placeholder="e.g. 30m, 2h, 0 9 * * *">
+      
+      <label class="form-label">Provider</label>
+      <select id="cron-provider" class="form-select">
+        <option value="xiaomi">Xiaomi (MiMo)</option>
+        <option value="openrouter">OpenRouter</option>
+        <option value="anthropic">Anthropic</option>
+      </select>
+      
+      <label class="form-label">Model</label>
+      <input type="text" id="cron-model" class="form-input" value="mimo-v2.5-pro" placeholder="e.g. mimo-v2.5-pro">
+      
+      <label class="form-label">Task Prompt</label>
+      <textarea id="cron-prompt" class="form-textarea" rows="4" placeholder="Describe what the job should do..."></textarea>
+      
+      <label class="form-label">Deliver To</label>
+      <select id="cron-deliver" class="form-select">
+        <option value="origin">This Chat</option>
+        <option value="telegram">Telegram Home</option>
+        <option value="local">Local Only</option>
+      </select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('cron')">Cancel</button>
+      <button class="btn-primary" onclick="saveCron()">Create Job</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="toast hidden"></div>
+
+<script src="app.js"></script>
+</body>
+</html>

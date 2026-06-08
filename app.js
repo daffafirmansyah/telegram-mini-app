@@ -453,21 +453,17 @@ async function generateCC() {
     </div>
   `).join('');
 
-  // Store for copy
-  window._ccCards = cards;
-  showToast(`✅ ${qty} cards generated`);
-
   // Auto-fill batch check textarea
-  requestAnimationFrame(() => {
-    const batchTextarea = document.getElementById('check-batch');
-    if (batchTextarea) {
-      batchTextarea.value = cards.map(c => {
-        const [mm, yy] = c.exp.split('/');
-        return `${c.card}|${mm}/${yy}|${c.cvv}`;
-      }).join('\n');
-      batchTextarea.dispatchEvent(new Event('input', { bubbles: true }));
-    }
+  const lines = cards.map(c => {
+    const [mm, yy] = c.exp.split('/');
+    return `${c.card}|${mm}/${yy}|${c.cvv}`;
   });
+  document.getElementById('check-batch').value = lines.join('\n');
+
+  // Store for copy and batch check
+  window._ccCards = cards;
+  window._ccLines = lines;
+  showToast(`✅ ${qty} cards generated`);
 }
 
 function copyCC(idx) {
@@ -555,6 +551,78 @@ function getCountryName(code) {
 // ============================================================
 // CC CHECKER (chkr.cc API)
 // ============================================================
+
+async function batchCheckFromGen() {
+  // Use stored lines from generateCC
+  const lines = window._ccLines;
+  if (!lines || !lines.length) return showToast('❌ Generate CC first');
+
+  const resultsEl = document.getElementById('batch-results');
+  const containerEl = document.getElementById('batch-container');
+  const statsEl = document.getElementById('batch-stats');
+  resultsEl.classList.remove('hidden');
+  containerEl.innerHTML = '<div style="color:var(--text-dim); padding:16px">Checking...</div>';
+
+  let live = 0, die = 0, unknown = 0;
+  const results = [];
+
+  for (const line of lines) {
+    const parts = line.split('|').map(p => p.trim());
+    const card = parts[0], exp = parts[1], cvv = parts[2];
+    const [mm, yy] = exp.split('/');
+    const dataStr = `${card}|${mm}|${yy}|${cvv}`;
+
+    try {
+      const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent('https://api.chkr.cc/');
+      const resp = await fetch(proxyUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: dataStr, charge: false }),
+      });
+
+      if (resp.status === 429) {
+        results.push({ card, exp, cvv, status: 'rate_limited' });
+        unknown++;
+      } else {
+        const data = await resp.json();
+        const status = (data.status || 'unknown').toLowerCase();
+        if (status === 'live') live++;
+        else if (status === 'die') die++;
+        else unknown++;
+        results.push({ card, exp, cvv, status, bank: data.card?.bank, message: data.message });
+      }
+    } catch {
+      results.push({ card, exp, cvv, status: 'error' });
+      unknown++;
+    }
+    await new Promise(r => setTimeout(r, 2500));
+  }
+
+  statsEl.textContent = `✅ ${live} Live | ❌ ${die} Die | ⚠️ ${unknown} Unknown`;
+  containerEl.innerHTML = results.map(r => {
+    const statusColor = r.status === 'live' ? 'var(--green)' : r.status === 'die' ? 'var(--red)' : 'var(--yellow)';
+    const emoji = r.status === 'live' ? '✅' : r.status === 'die' ? '❌' : '⚠️';
+    const label = r.status === 'rate_limited' ? 'RATE LIMITED' : r.status.toUpperCase();
+    return `
+      <div class="cc-card">
+        <div>
+          <div class="cc-number">${r.card}</div>
+          <div class="cc-details">
+            <span>${r.exp}</span>
+            <span>${r.cvv}</span>
+            ${r.bank ? `<span>${r.bank}</span>` : ''}
+          </div>
+          ${r.message ? `<div style="font-size:10px; color:var(--text-dim); margin-top:2px">${r.message}</div>` : ''}
+        </div>
+        <div style="font-size:14px; font-weight:700; color:${statusColor}; font-family:'JetBrains Mono',monospace">
+          ${emoji} ${label}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  showToast(`Checked: ${live} live, ${die} die, ${unknown} unknown`);
+}
 
 async function checkCC() {
   const card = document.getElementById('check-card').value.trim().replace(/\s/g, '');

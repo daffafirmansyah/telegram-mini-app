@@ -147,7 +147,10 @@
     <div id="cc-results" class="hidden">
       <div class="section-subheader">
         <span>Generated Cards</span>
-        <button class="btn-copy" onclick="copyAllCC()">📋 Copy All</button>
+        <div style="display:flex;gap:8px">
+          <button class="btn-copy" onclick="copyAllCC()">📋 Copy All</button>
+          <button class="btn-primary" onclick="document.getElementById('check-batch').scrollIntoView({behavior:'smooth'});batchCheckCC()" style="padding:6px 12px;font-size:11px">⚡ Check All</button>
+        </div>
       </div>
       <div id="cc-container" class="card-list"></div>
     </div>

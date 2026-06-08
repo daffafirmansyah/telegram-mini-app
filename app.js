@@ -456,6 +456,13 @@ async function generateCC() {
   // Store for copy
   window._ccCards = cards;
   showToast(`✅ ${qty} cards generated`);
+
+  // Auto-fill batch check textarea
+  const batchTextarea = document.getElementById('check-batch');
+  batchTextarea.value = cards.map(c => {
+    const [mm, yy] = c.exp.split('/');
+    return `${c.card}|${mm}/${yy}|${c.cvv}`;
+  }).join('\n');
 }
 
 function copyCC(idx) {

@@ -718,7 +718,9 @@ async function checkCC() {
     }
 
     const data = await resp.json();
-    console.log('[CHKR] single check', 'status:', resp.status, 'data:', JSON.stringify(data).slice(0, 200));
+    const rawStr = JSON.stringify(data).slice(0, 150);
+    console.log('[CHKR]', c.card, 'status:', resp.status, 'data:', rawStr);
+    window._debugResponses.push({ card: c.card.slice(0,6) + '...', httpStatus: resp.status, raw: rawStr });
 
     // Detect rate limit or error responses
     if (resp.status === 429 || data.error || !data.status || (data.message && data.message.toLowerCase().includes('rate limit'))) {
@@ -791,6 +793,7 @@ async function batchCheckCC() {
 
   let live = 0, die = 0, unknown = 0;
   const results = [];
+  window._debugResponses = [];
 
   for (const c of cards) {
     const [mm, yy] = c.exp.split('/');
@@ -836,6 +839,15 @@ async function batchCheckCC() {
   }
 
   statsEl.textContent = `✅ ${live} Live | ❌ ${die} Die | ⚠️ ${unknown} Unknown`;
+
+  // Debug: show raw responses
+  if (window._debugResponses && window._debugResponses.length) {
+    const debugEl = document.createElement('div');
+    debugEl.style.cssText = 'margin-top:12px;padding:12px;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;font-size:10px;font-family:monospace;color:var(--text-dim);max-height:200px;overflow-y:auto';
+    debugEl.innerHTML = '<div style="font-weight:700;margin-bottom:8px;color:var(--yellow)">🔍 DEBUG RESPONSES</div>' +
+      window._debugResponses.map((r, i) => `<div style="margin-bottom:4px">#${i+1} [${r.card}] → HTTP ${r.httpStatus} | ${r.raw}</div>`).join('');
+    containerEl.parentNode.insertBefore(debugEl, containerEl.nextSibling);
+  }
 
   // Sort: Live first, then Unknown, then Die
   const sortOrder = { live: 0, unknown: 1, rate_limited: 2, error: 3, die: 4 };

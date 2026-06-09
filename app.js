@@ -623,14 +623,20 @@ async function batchCheckFromGen() {
       const data = await resp.json();
 
       // Detect rate limit or error responses
+      const rateLimitMsg = (data.message || '').toLowerCase();
       const isRateLimit = resp.status === 429 || data.error || !data.status ||
-                          (data.message && data.message.includes('rate limit'));
+                          rateLimitMsg.includes('rate limit') || rateLimitMsg.includes('too many requests');
       const isLive = data.status && data.status.toLowerCase() === 'live';
       const isDie = data.status && data.status.toLowerCase() === 'die';
 
       if (isRateLimit) {
-        results.push({ card, mm, yy, cvv, status: 'error', message: data.error || data.message || 'Rate limited' });
-        unknown++;
+        results.push({ card, mm, yy, cvv, status: 'rate_limited', message: data.error || data.message || 'Rate limited' });
+        // Stop checking remaining cards — no point if rate limited
+        for (const remaining of lines.slice(lines.indexOf(line) + 1)) {
+          const rp = remaining.split('|').map(p => p.trim());
+          results.push({ card: rp[0], mm: rp[1]?.split('/')[0], yy: rp[1]?.split('/')[1], cvv: rp[2], status: 'rate_limited', message: 'Skipped (rate limited)' });
+        }
+        break;
       } else if (isLive) {
         live++;
         const binInfo = getBinInfo(card.slice(0, 6));
@@ -647,10 +653,13 @@ async function batchCheckFromGen() {
       results.push({ card, mm, yy, cvv, status: 'error' });
       unknown++;
     }
+    // Only delay if not rate-limited (break already happened)
     await new Promise(r => setTimeout(r, 3500));
   }
 
-  statsEl.textContent = `✅ ${live} Live | ❌ ${die} Die | ⚠️ ${unknown} Unknown`;
+  const rateLimited = results.filter(r => r.status === 'rate_limited').length;
+  const skipped = results.filter(r => r.message === 'Skipped (rate limited)').length;
+  statsEl.textContent = `✅ ${live} Live | ❌ ${die} Die | ⚠️ ${unknown} Unknown | ⏳ ${rateLimited} Limited${skipped > 0 ? ` (${skipped} skipped)` : ''}`;
 
   const sortOrder = { live: 0, unknown: 1, rate_limited: 2, error: 3, die: 4 };
   results.sort((a, b) => (sortOrder[a.status] ?? 5) - (sortOrder[b.status] ?? 5));
@@ -809,14 +818,20 @@ async function batchCheckCC() {
       const data = await resp.json();
 
       // Detect rate limit or error responses
+      const rateLimitMsg = (data.message || '').toLowerCase();
       const isRateLimit = resp.status === 429 || data.error || !data.status ||
-                          (data.message && data.message.includes('rate limit'));
+                          rateLimitMsg.includes('rate limit') || rateLimitMsg.includes('too many requests');
       const isLive = data.status && data.status.toLowerCase() === 'live';
       const isDie = data.status && data.status.toLowerCase() === 'die';
 
       if (isRateLimit) {
-        results.push({ ...c, status: 'error', mm, yy, message: data.error || data.message || 'Rate limited' });
-        unknown++;
+        results.push({ ...c, status: 'rate_limited', mm, yy, message: data.error || data.message || 'Rate limited' });
+        // Stop checking remaining cards
+        for (const remaining of cards.slice(cards.indexOf(c) + 1)) {
+          const [rmm, ryy] = remaining.exp.split('/');
+          results.push({ ...remaining, status: 'rate_limited', mm: rmm, yy: ryy, message: 'Skipped (rate limited)' });
+        }
+        break;
       } else if (isLive) {
         live++;
         const binInfo = getBinInfo(c.card.slice(0, 6));
@@ -838,7 +853,9 @@ async function batchCheckCC() {
     await new Promise(r => setTimeout(r, 3500));
   }
 
-  statsEl.textContent = `✅ ${live} Live | ❌ ${die} Die | ⚠️ ${unknown} Unknown`;
+  const rateLimited = results.filter(r => r.status === 'rate_limited').length;
+  const skipped = results.filter(r => r.message === 'Skipped (rate limited)').length;
+  statsEl.textContent = `✅ ${live} Live | ❌ ${die} Die | ⚠️ ${unknown} Unknown | ⏳ ${rateLimited} Limited${skipped > 0 ? ` (${skipped} skipped)` : ''}`;
 
   // Debug: show raw responses
   if (window._debugResponses && window._debugResponses.length) {

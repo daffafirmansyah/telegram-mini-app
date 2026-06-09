@@ -616,7 +616,12 @@ async function batchCheckFromGen() {
     try {
       const resp = await fetch('https://api.chkr.cc/', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Referer': 'https://chkr.cc/',
+          'Origin': 'https://chkr.cc',
+          'Accept': '*/*',
+        },
         body: JSON.stringify({ data: dataStr, charge }),
       });
 
@@ -711,7 +716,12 @@ async function checkCC() {
   try {
     const resp = await fetch('https://api.chkr.cc/', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Referer': 'https://chkr.cc/',
+        'Origin': 'https://chkr.cc',
+        'Accept': '*/*',
+      },
       body: JSON.stringify({ data: dataStr, charge }),
     });
 
@@ -811,7 +821,12 @@ async function batchCheckCC() {
     try {
       const resp = await fetch('https://api.chkr.cc/', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Referer': 'https://chkr.cc/',
+          'Origin': 'https://chkr.cc',
+          'Accept': '*/*',
+        },
         body: JSON.stringify({ data: dataStr, charge }),
       });
 

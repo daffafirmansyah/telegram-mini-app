@@ -621,23 +621,28 @@ async function batchCheckFromGen() {
         body: JSON.stringify({ data: dataStr, charge }),
       });
 
-      if (resp.status === 429) {
-        results.push({ card, mm, yy, cvv, status: 'rate_limited' });
+      const data = await resp.json();
+
+      // Detect rate limit or error responses
+      const isRateLimit = resp.status === 429 || data.error || !data.status ||
+                          (data.message && data.message.includes('rate limit'));
+      const isLive = data.status && data.status.toLowerCase() === 'live';
+      const isDie = data.status && data.status.toLowerCase() === 'die';
+
+      if (isRateLimit) {
+        results.push({ card, mm, yy, cvv, status: 'error', message: data.error || data.message || 'Rate limited' });
         unknown++;
+      } else if (isLive) {
+        live++;
+        const binInfo = getBinInfo(card.slice(0, 6));
+        results.push({ card, mm, yy, cvv, status: 'live', bank: data.card?.bank || binInfo.issuer, type: data.card?.type || binInfo.type, country: binInfo.country, message: data.message, chargeOk: charge });
+      } else if (isDie) {
+        die++;
+        const binInfo = getBinInfo(card.slice(0, 6));
+        results.push({ card, mm, yy, cvv, status: 'die', bank: data.card?.bank || binInfo.issuer, type: data.card?.type || binInfo.type, country: binInfo.country, message: data.message });
       } else {
-        const data = await resp.json();
-        // Detect error responses (chkr.cc returns 200 with error object)
-        if (data.error || !data.status) {
-          results.push({ card, mm, yy, cvv, status: 'error', message: data.error || data.message || 'API error' });
-          unknown++;
-        } else {
-          const status = data.status.toLowerCase();
-          if (status === 'live') live++;
-          else if (status === 'die') die++;
-          else unknown++;
-          const binInfo = getBinInfo(card.slice(0, 6));
-          results.push({ card, mm, yy, cvv, status, bank: data.card?.bank || binInfo.issuer, type: data.card?.type || binInfo.type, country: binInfo.country, message: data.message, chargeOk: charge && status === 'live' });
-        }
+        unknown++;
+        results.push({ card, mm, yy, cvv, status: 'unknown', message: data.message || JSON.stringify(data) });
       }
     } catch {
       results.push({ card, mm, yy, cvv, status: 'error' });
@@ -716,14 +721,14 @@ async function checkCC() {
 
     const data = await resp.json();
 
-    // Detect rate limit or error responses (chkr.cc returns 200 with error object)
-    if (data.error || !data.status) {
-      const errMsg = data.error || data.message || 'Unknown response';
+    // Detect rate limit or error responses
+    if (resp.status === 429 || data.error || !data.status || (data.message && data.message.toLowerCase().includes('rate limit'))) {
+      const errMsg = data.error || data.message || 'Rate limited — try again later';
       contentEl.innerHTML = `
         <div style="text-align:center; padding:16px; color:var(--yellow)">
-          <div style="font-size:32px; margin-bottom:8px">⚠️</div>
-          <div>${errMsg}</div>
-          <div style="font-size:11px; color:var(--text-dim); margin-top:4px">Try again in a few minutes</div>
+          <div style="font-size:32px; margin-bottom:8px">⏳</div>
+          <div style="font-weight:600">Rate Limited</div>
+          <div style="font-size:12px; color:var(--text-dim); margin-top:4px">${errMsg}</div>
         </div>
       `;
       return;
@@ -800,23 +805,28 @@ async function batchCheckCC() {
         body: JSON.stringify({ data: dataStr, charge }),
       });
 
-      if (resp.status === 429) {
-        results.push({ ...c, status: 'rate_limited', mm, yy });
+      const data = await resp.json();
+
+      // Detect rate limit or error responses
+      const isRateLimit = resp.status === 429 || data.error || !data.status ||
+                          (data.message && data.message.includes('rate limit'));
+      const isLive = data.status && data.status.toLowerCase() === 'live';
+      const isDie = data.status && data.status.toLowerCase() === 'die';
+
+      if (isRateLimit) {
+        results.push({ ...c, status: 'error', mm, yy, message: data.error || data.message || 'Rate limited' });
         unknown++;
+      } else if (isLive) {
+        live++;
+        const binInfo = getBinInfo(c.card.slice(0, 6));
+        results.push({ ...c, status: 'live', mm, yy, bank: data.card?.bank || binInfo.issuer, type: data.card?.type || binInfo.type, country: binInfo.country, message: data.message, chargeOk: charge });
+      } else if (isDie) {
+        die++;
+        const binInfo = getBinInfo(c.card.slice(0, 6));
+        results.push({ ...c, status: 'die', mm, yy, bank: data.card?.bank || binInfo.issuer, type: data.card?.type || binInfo.type, country: binInfo.country, message: data.message });
       } else {
-        const data = await resp.json();
-        // Detect error responses (chkr.cc returns 200 with error object)
-        if (data.error || !data.status) {
-          results.push({ ...c, status: 'error', mm, yy, message: data.error || data.message || 'API error' });
-          unknown++;
-        } else {
-          const status = data.status.toLowerCase();
-          if (status === 'live') live++;
-          else if (status === 'die') die++;
-          else unknown++;
-          const binInfo = getBinInfo(c.card.slice(0, 6));
-          results.push({ ...c, status, mm, yy, bank: data.card?.bank || binInfo.issuer, type: data.card?.type || binInfo.type, country: binInfo.country, message: data.message, chargeOk: charge && status === 'live' });
-        }
+        unknown++;
+        results.push({ ...c, status: 'unknown', mm, yy, message: data.message || JSON.stringify(data) });
       }
     } catch {
       results.push({ ...c, status: 'error', mm: '', yy: '' });

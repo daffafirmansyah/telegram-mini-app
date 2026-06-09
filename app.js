@@ -578,7 +578,7 @@ async function batchCheckFromGen() {
     const dataStr = `${card}|${mm}|${yy}|${cvv}`;
 
     try {
-      const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent('https://api.chkr.cc/');
+      const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://api.chkr.cc/');
       const resp = await fetch(proxyUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -647,7 +647,7 @@ async function checkCC() {
   const dataStr = `${card}|${mm}|${yy}|${cvv}`;
 
   try {
-    const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent('https://api.chkr.cc/');
+    const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://api.chkr.cc/');
     const resp = await fetch(proxyUrl, {
       method: 'POST',
       headers: {
@@ -725,7 +725,7 @@ async function batchCheckCC() {
     const dataStr = `${c.card}|${mm}|${yy}|${c.cvv}`;
 
     try {
-      const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent('https://api.chkr.cc/');
+      const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://api.chkr.cc/');
       const resp = await fetch(proxyUrl, {
         method: 'POST',
         headers: {

@@ -718,6 +718,7 @@ async function checkCC() {
     }
 
     const data = await resp.json();
+    console.log('[CHKR] single check', 'status:', resp.status, 'data:', JSON.stringify(data).slice(0, 200));
 
     // Detect rate limit or error responses
     if (resp.status === 429 || data.error || !data.status || (data.message && data.message.toLowerCase().includes('rate limit'))) {

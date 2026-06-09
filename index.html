@@ -191,6 +191,11 @@
             <input type="text" id="check-cvv" class="form-input" placeholder="016" maxlength="4" inputmode="numeric">
           </div>
         </div>
+        <div class="form-row" style="align:center;gap:12px;margin-bottom:12px">
+          <label class="form-label" style="margin:0;cursor:pointer">
+            <input type="checkbox" id="check-charge" style="accent-color:var(--purple);margin-right:6px">⚡ Charge Check ($0 auth)
+          </label>
+        </div>
         <button class="btn-primary btn-full" onclick="checkCC()">🔍 Check Card</button>
       </div>
       <div id="check-result" class="info-card hidden">
@@ -200,8 +205,13 @@
       
       <!-- Batch Check -->
       <div class="form-card" style="margin-top:12px">
-        <label class="form-label">Batch Check (one card per line)</label>
-        <textarea id="check-batch" class="form-textarea" rows="4" placeholder="4532010000000000|08/29|016&#10;5289850000000000|12/28|123"></textarea>
+        <label class="form-label">Batch Check (one card per line: CARD|MM/YY|CVV)</label>
+        <textarea id="check-batch" class="form-textarea" rows="4" placeholder="6233586370009858|10/29|500&#10;6233586370187266|06/31|834"></textarea>
+        <div class="form-row" style="align:center;gap:12px;margin-bottom:12px">
+          <label class="form-label" style="margin:0;cursor:pointer">
+            <input type="checkbox" id="batch-charge" style="accent-color:var(--purple);margin-right:6px">⚡ Charge Check ($0 auth)
+          </label>
+        </div>
         <button class="btn-secondary btn-full" onclick="batchCheckCC()">⚡ Batch Check</button>
       </div>
       <div id="batch-results" class="hidden">

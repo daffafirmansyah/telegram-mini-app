@@ -626,18 +626,24 @@ async function batchCheckFromGen() {
         unknown++;
       } else {
         const data = await resp.json();
-        const status = (data.status || 'unknown').toLowerCase();
-        if (status === 'live') live++;
-        else if (status === 'die') die++;
-        else unknown++;
-        const binInfo = getBinInfo(card.slice(0, 6));
-        results.push({ card, mm, yy, cvv, status, bank: data.card?.bank || binInfo.issuer, type: data.card?.type || binInfo.type, country: binInfo.country, message: data.message, chargeOk: charge && status === 'live' });
+        // Detect error responses (chkr.cc returns 200 with error object)
+        if (data.error || !data.status) {
+          results.push({ card, mm, yy, cvv, status: 'error', message: data.error || data.message || 'API error' });
+          unknown++;
+        } else {
+          const status = data.status.toLowerCase();
+          if (status === 'live') live++;
+          else if (status === 'die') die++;
+          else unknown++;
+          const binInfo = getBinInfo(card.slice(0, 6));
+          results.push({ card, mm, yy, cvv, status, bank: data.card?.bank || binInfo.issuer, type: data.card?.type || binInfo.type, country: binInfo.country, message: data.message, chargeOk: charge && status === 'live' });
+        }
       }
     } catch {
       results.push({ card, mm, yy, cvv, status: 'error' });
       unknown++;
     }
-    await new Promise(r => setTimeout(r, 2500));
+    await new Promise(r => setTimeout(r, 3500));
   }
 
   statsEl.textContent = `✅ ${live} Live | ❌ ${die} Die | ⚠️ ${unknown} Unknown`;
@@ -648,7 +654,7 @@ async function batchCheckFromGen() {
   containerEl.innerHTML = results.map(r => {
     const statusColor = r.status === 'live' ? 'var(--green)' : r.status === 'die' ? 'var(--red)' : 'var(--yellow)';
     const emoji = r.status === 'live' ? '✅' : r.status === 'die' ? '❌' : '⚠️';
-    const label = r.status === 'rate_limited' ? 'RATE LIMITED' : r.status.toUpperCase();
+    const label = r.status === 'rate_limited' ? '⏳ RATE LIMITED' : r.status === 'error' ? '⚠️ ERROR' : r.status.toUpperCase();
     const flag = getCountryFlag(r.country || 'Unknown');
     return `
       <div class="cc-card" style="border-left: 3px solid ${statusColor}">
@@ -709,7 +715,21 @@ async function checkCC() {
     }
 
     const data = await resp.json();
-    const status = (data.status || 'unknown').toLowerCase();
+
+    // Detect rate limit or error responses (chkr.cc returns 200 with error object)
+    if (data.error || !data.status) {
+      const errMsg = data.error || data.message || 'Unknown response';
+      contentEl.innerHTML = `
+        <div style="text-align:center; padding:16px; color:var(--yellow)">
+          <div style="font-size:32px; margin-bottom:8px">⚠️</div>
+          <div>${errMsg}</div>
+          <div style="font-size:11px; color:var(--text-dim); margin-top:4px">Try again in a few minutes</div>
+        </div>
+      `;
+      return;
+    }
+
+    const status = data.status.toLowerCase();
     const statusColor = status === 'live' ? 'var(--green)' : status === 'die' ? 'var(--red)' : 'var(--yellow)';
     const statusEmoji = status === 'live' ? '✅' : status === 'die' ? '❌' : '⚠️';
     const bank = data.card?.bank || 'Unknown';
@@ -785,20 +805,26 @@ async function batchCheckCC() {
         unknown++;
       } else {
         const data = await resp.json();
-        const status = (data.status || 'unknown').toLowerCase();
-        if (status === 'live') live++;
-        else if (status === 'die') die++;
-        else unknown++;
-        const binInfo = getBinInfo(c.card.slice(0, 6));
-        results.push({ ...c, status, mm, yy, bank: data.card?.bank || binInfo.issuer, type: data.card?.type || binInfo.type, country: binInfo.country, message: data.message, chargeOk: charge && status === 'live' });
+        // Detect error responses (chkr.cc returns 200 with error object)
+        if (data.error || !data.status) {
+          results.push({ ...c, status: 'error', mm, yy, message: data.error || data.message || 'API error' });
+          unknown++;
+        } else {
+          const status = data.status.toLowerCase();
+          if (status === 'live') live++;
+          else if (status === 'die') die++;
+          else unknown++;
+          const binInfo = getBinInfo(c.card.slice(0, 6));
+          results.push({ ...c, status, mm, yy, bank: data.card?.bank || binInfo.issuer, type: data.card?.type || binInfo.type, country: binInfo.country, message: data.message, chargeOk: charge && status === 'live' });
+        }
       }
     } catch {
       results.push({ ...c, status: 'error', mm: '', yy: '' });
       unknown++;
     }
 
-    // Rate limit: 2500ms between requests
-    await new Promise(r => setTimeout(r, 2500));
+    // Rate limit: 3500ms between requests (chkr.cc strict)
+    await new Promise(r => setTimeout(r, 3500));
   }
 
   statsEl.textContent = `✅ ${live} Live | ❌ ${die} Die | ⚠️ ${unknown} Unknown`;
@@ -810,7 +836,7 @@ async function batchCheckCC() {
   containerEl.innerHTML = results.map(r => {
     const statusColor = r.status === 'live' ? 'var(--green)' : r.status === 'die' ? 'var(--red)' : 'var(--yellow)';
     const emoji = r.status === 'live' ? '✅' : r.status === 'die' ? '❌' : '⚠️';
-    const label = r.status === 'rate_limited' ? 'RATE LIMITED' : r.status.toUpperCase();
+    const label = r.status === 'rate_limited' ? '⏳ RATE LIMITED' : r.status === 'error' ? '⚠️ ERROR' : r.status.toUpperCase();
     const flag = getCountryFlag(r.country || 'Unknown');
     return `
       <div class="cc-card" style="border-left: 3px solid ${statusColor}">

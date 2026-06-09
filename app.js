@@ -701,8 +701,7 @@ async function checkCC() {
   const dataStr = `${card}|${mm}|${yy}|${cvv}`;
 
   try {
-    const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://api.chkr.cc/');
-    const resp = await fetch(proxyUrl, {
+    const resp = await fetch('https://api.chkr.cc/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ data: dataStr, charge }),
